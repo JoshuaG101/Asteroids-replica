@@ -83,18 +83,35 @@ class Player {
     }
 }
 
-    
-class Asteroid {
-    constructor({ position, velocity }) {
-        this.position = position;
-        this.velocity = velocity;
-        this.rotation = 0;
+class Projectile{
+    constructor({position, velocity}){
+        this.position = position
+        this.velocity = velocity
+        this.radius = 5
+        this.rotation = Math.atan2(velocity.y, velocity.x); // Calculate the angle based on velocity
+
     }
 
     draw() {
-        // Implement asteroid drawing here if needed
+        context.save();
+        context.translate(this.position.x, this.position.y);
+        context.rotate(this.rotation); // Rotate the projectile to face its velocity
+
+        context.fillStyle = 'orange';
+        context.fillRect(-7.5, -2, 15, 4); // Centered rectangle (adjusted coordinates for rotation)
+
+        context.restore();
+    }
+
+    update(){
+        this.draw()
+        this.position.x  += this.velocity.x
+        this.position.y += this.velocity.y
     }
 }
+    
+
+
 
 // Function to create random dots
 function createDots(numDots) {
@@ -127,13 +144,17 @@ const keys = {
     w: { pressed: false },
     a: { pressed: false },
     d: { pressed: false },
-};
+};  
 
 const MOVE_SPEED = 0.098; // Movement speed increment
 const FRICTION = 0.98; // Friction to slow down the player
 const ROTATE_SPEED = 0.05; // Rotation speed
+
 const NUM_DOTS = 100; // Number of dots in the background
 const dots = createDots(NUM_DOTS); // Create dots
+
+const projectiles = []
+const PROJECTILE_SPEED = 3
 
 function animate() {
     window.requestAnimationFrame(animate);
@@ -143,6 +164,20 @@ function animate() {
 
     drawDots(dots); // Draw the dots in the background
     player.update();
+
+    for (let i = projectiles.length - 1; i >= 0; i--){//we use a for loop instead of projectile.forEach() because we want to render things from the back not the front (when we want to remove the)
+        const projectile = projectiles[i];
+        projectile.update()
+
+        //garbaje collection for porjectiles
+        if (projectile.position.x + projectile.radius < 0 || 
+            projectile.position.x - projectile.radius > canvas.width ||
+            projectile.position.y - projectile.radius > canvas.height ||
+            projectile.position.y + projectile.radius < 0
+        ){
+            projectiles.splice(i,1)
+        }
+    }
 
     if (keys.w.pressed) {
         player.velocity.x += MOVE_SPEED * Math.cos(player.rotation);
@@ -172,6 +207,7 @@ function animate() {
     if (keys.d.pressed) player.rotation += ROTATE_SPEED;
 }
 
+
 animate();
 
 window.addEventListener('keydown', (event) => {
@@ -185,6 +221,17 @@ window.addEventListener('keydown', (event) => {
         case 'KeyD':
             keys.d.pressed = true;
             break;
+        case 'Space':
+            projectiles.push(new Projectile({
+                position:{
+                    x:player.position.x + Math.cos(player.rotation)*30 ,
+                    y:player.position.y + Math.sin(player.rotation)*30 // will spawn projectile on the player
+                },
+                velocity: {
+                    x:Math.cos(player.rotation) * PROJECTILE_SPEED,
+                    y:Math.sin(player.rotation) * PROJECTILE_SPEED ,
+                }
+            }))
     }
 });
 
@@ -200,4 +247,4 @@ window.addEventListener('keyup', (event) => {
             keys.d.pressed = false;
             break;
     }
-});
+})
