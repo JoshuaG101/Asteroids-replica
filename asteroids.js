@@ -258,12 +258,21 @@ window.setInterval(() => {
         radius,
      }))
 }, 3000);
-/*
+
 function collision(circle1, circle2){
     const xDifference = circle2.position.x - circle1.position.x
     const yDifference = circle2.position.y - circle1.position.y
 
-}*/
+    const distance = Math.sqrt(xDifference * xDifference + yDifference * yDifference)
+
+    if ( distance <= circle1.radius + circle2.radius){
+        console.log("Two have collided")
+        return true
+    }
+    
+    return false
+}
+
 function animate() {
     window.requestAnimationFrame(animate);
     
@@ -289,9 +298,21 @@ function animate() {
         }
     }
  // Asteroid management
-for (let i = 0; i < asteroid.length; i++) {
+ for (let i = 0; i < asteroid.length; i++) {
     const currentAsteroid = asteroid[i];
+
+    for (let j = 0; j < projectiles.length; j++) {
+        const projectile = projectiles[j];
+
+        if (collision(currentAsteroid, projectile)) {
+            // Handle collision logic, e.g., remove projectile and asteroid
+            projectiles.splice(j, 1);
+            asteroid.splice(i, 1);
+            break; // Break to avoid issues with removed items
+        }
     
+    currentAsteroid.update();
+}
     if (currentAsteroid.position.x < 0) {
         currentAsteroid.position.x = canvas.width;
     } else if (currentAsteroid.position.x > canvas.width) {
@@ -304,11 +325,9 @@ for (let i = 0; i < asteroid.length; i++) {
         currentAsteroid.position.y = 0;
     }
 
+
     currentAsteroid.update(); // Update each asteroid
-}
-
-
-    
+}    
     if (keys.w.pressed) {
         player.velocity.x += MOVE_SPEED * Math.cos(player.rotation);
         player.velocity.y += MOVE_SPEED * Math.sin(player.rotation);
