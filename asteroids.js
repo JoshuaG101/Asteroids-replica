@@ -83,6 +83,61 @@ class Player {
     }
 }
 
+class Asteroid {
+    constructor({ position, velocity, radius }) {
+        this.position = position;
+        this.velocity = velocity;
+        this.radius = radius;
+        this.rotation = Math.atan2(velocity.y, velocity.x); // Calculate the angle based on velocity
+        this.vertices = this.generateVertices(); // Generate vertices for the asteroid
+    }
+
+    generateVertices() {
+        const numVertices = Math.floor(Math.random() * 4) + 5; // Randomly select between 5-8 vertices
+        const angleStep = (Math.PI * 2) / numVertices;
+        const vertices = [];
+
+        for (let i = 0; i < numVertices; i++) {
+            const angle = i * angleStep;
+            const rad = this.radius + (Math.random() * 10 - 5); // Add some random noise to the radius
+            const x = rad * Math.cos(angle);
+            const y = rad * Math.sin(angle);
+            vertices.push({ x, y });
+        }
+
+        return vertices;
+    }
+
+    draw() {
+        context.save();
+        context.translate(this.position.x, this.position.y);
+        context.rotate(this.rotation); // Rotate the asteroid to face its velocity
+
+        context.strokeStyle = "grey";
+        context.lineWidth = 3;
+        context.beginPath();
+
+        // Move to the first vertex
+        context.moveTo(this.vertices[0].x, this.vertices[0].y);
+        
+        // Draw lines between each vertex
+        for (let i = 1; i < this.vertices.length; i++) {
+            context.lineTo(this.vertices[i].x, this.vertices[i].y);
+        }
+        
+        context.closePath();
+        context.stroke();
+
+        context.restore();
+    }
+
+    update() {
+        this.draw();
+        this.position.x += this.velocity.x;
+        this.position.y += this.velocity.y;
+    }
+}
+
 class Projectile{
     constructor({position, velocity}){
         this.position = position
@@ -156,6 +211,59 @@ const dots = createDots(NUM_DOTS); // Create dots
 const projectiles = []
 const PROJECTILE_SPEED = 3
 
+const asteroid = []
+ 
+window.setInterval(() => {
+    const index = Math.floor(Math.random ()* 4);
+    let x,y,vx, vy;
+    let radius = 50* Math.random()+10;
+
+    switch (index){
+    case 0: // left side 
+        x =  0 - radius
+        y =  Math.random() * canvas.height
+        vx = 1
+        vy = 0
+        break 
+    case 1: // right side 
+        x=  canvas.width + radius
+        y=  Math.random() * canvas.height
+        vx = -1
+        vy = 0
+        break
+     case 2: // top side 
+        x=  Math.random() * canvas.width
+        y=  0 - radius
+        vx = 0
+        vy =  1
+        break
+    case 3:// bot side  
+        x=  Math.random() * canvas.width
+        y=  canvas.height + radius
+        vx = 0
+        vy = -1
+        break
+    }
+
+    asteroid.push(
+        new Asteroid({
+         position:{
+            x: x,
+            y: y,
+        },
+        velocity: {
+            x:vx,
+            y:vy,
+        } ,
+        radius,
+     }))
+}, 3000);
+/*
+function collision(circle1, circle2){
+    const xDifference = circle2.position.x - circle1.position.x
+    const yDifference = circle2.position.y - circle1.position.y
+
+}*/
 function animate() {
     window.requestAnimationFrame(animate);
     
@@ -165,11 +273,13 @@ function animate() {
     drawDots(dots); // Draw the dots in the background
     player.update();
 
+
+
     for (let i = projectiles.length - 1; i >= 0; i--){//we use a for loop instead of projectile.forEach() because we want to render things from the back not the front (when we want to remove the)
         const projectile = projectiles[i];
         projectile.update()
 
-        //garbaje collection for porjectiles
+        //garbaje collection for projectiles
         if (projectile.position.x + projectile.radius < 0 || 
             projectile.position.x - projectile.radius > canvas.width ||
             projectile.position.y - projectile.radius > canvas.height ||
@@ -178,7 +288,27 @@ function animate() {
             projectiles.splice(i,1)
         }
     }
+ // Asteroid management
+for (let i = 0; i < asteroid.length; i++) {
+    const currentAsteroid = asteroid[i];
+    
+    if (currentAsteroid.position.x < 0) {
+        currentAsteroid.position.x = canvas.width;
+    } else if (currentAsteroid.position.x > canvas.width) {
+        currentAsteroid.position.x = 0;
+    }
 
+    if (currentAsteroid.position.y < 0) {
+        currentAsteroid.position.y = canvas.height;
+    } else if (currentAsteroid.position.y > canvas.height) {
+        currentAsteroid.position.y = 0;
+    }
+
+    currentAsteroid.update(); // Update each asteroid
+}
+
+
+    
     if (keys.w.pressed) {
         player.velocity.x += MOVE_SPEED * Math.cos(player.rotation);
         player.velocity.y += MOVE_SPEED * Math.sin(player.rotation);
